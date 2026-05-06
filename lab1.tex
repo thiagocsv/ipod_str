@@ -1,0 +1,200 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[brazil]{babel}
+\usepackage{booktabs}
+\usepackage{array}
+
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+
+\begin{document}
+
+\title{Player de Música com Requisitos de Tempo Real\\
+{\footnotesize Laboratório 01 — Disciplina: Processamento em Tempo Real — 1º/2026}
+}
+
+\author{
+\IEEEauthorblockN{Monique Yafuso Piquet}
+\IEEEauthorblockA{
+    Matrícula: 17/0172091 \\
+    \textit{Engenharia Mecatrônica - Controle e Automação} \\
+    \textit{Universidade de Brasília} \\
+    Brasília, Brasil \\
+    piquetmy@gmail.com
+}
+\and
+\IEEEauthorblockN{Raphael Henrique Nogueira Silva}
+\IEEEauthorblockA{
+    Matrícula: 22/2005930 \\
+    \textit{Engenharia Mecatrônica - Controle e Automação} \\
+    \textit{Universidade de Brasília} \\
+    Brasília, Brasil \\
+    raphaelhenriqueas@gmail.com
+}
+\and
+\IEEEauthorblockN{Thiago Carvalho Silva}
+\IEEEauthorblockA{
+    Matrícula: 22/2006463 \\
+    \textit{Engenharia Mecatrônica - Controle e Automação} \\
+    \textit{Universidade de Brasília} \\
+    Brasília, Brasil \\
+    thiago.carvalho861@hotmail.com
+}
+}
+
+\maketitle
+
+% ============================================================
+\begin{abstract}
+Este trabalho apresenta o desenvolvimento de um tocador de música
+portátil inspirado no iPod clássico, implementado sobre a plataforma
+ESP32. O sistema integra um display LCD 16x2 para interface com o
+usuário, um módulo leitor de cartão SD para armazenamento de arquivos
+de áudio, botões de controle, codificador rotativo para navegação e volume,
+e um conversor digital/analógico (DAC) externo via protocolo I2S para
+saída de áudio de alta qualidade. O desenvolvimento é realizado em lin-
+guagem Python, com ênfase nos conceitos de sistemas de tempo real, incluindo
+gerenciamento de tarefas, controle de buffers e tratamento de interrupções.
+Espera-se que o sistema realize a reprodução contínua e sem falhas de
+arquivos de áudio armazenados no cartão SD, respondendo de forma de-
+terminística aos comandos do usuário.
+\end{abstract}
+
+% ============================================================
+\section{Introdução}
+Um Sistema de Tempo Real é definido como aquele em que a correção do sistema depende não
+apenas do resultado lógico, mas também do instante em que
+esses resultados são produzidos. Nesse contexto, o tocador de
+música representa uma aplicação com restrições temporais bem definidas: a
+tarefa de reprodução de áudio deve entregar amostras ao DAC a uma taxa
+constante de, tipicamente, 44.1 kHz, sob pena de introduzir artefatos
+sonoros audíveis, caracterizando uma violação de deadline.
+
+Este projeto propõe o desenvolvimento de um tocador de música portátil baseado
+no microcontrolador ESP32. O sistema
+é composto por um display LCD 16x2 para exibição de metadados e estado de reprodução; leitor
+de cartão SD para acesso a arquivos MP3, além de arquivos que facilitem a indexação; botões físicos de controle (play/pause,
+próxima faixa, faixa anterior); codificador rotativo para ajuste de volume e
+navegação; DAC externo 16 bits via I2S para saída de áudio. O sistema é construído
+à partir do microkernel FreeRTOS, utilizando tarefas periódicas e aperiódicas e interrupções de hardware, atendendo aos
+requisitos formais de um STR.
+
+% ============================================================
+\section{Objetivos}
+
+O objetivo geral deste trabalho é desenvolver e validar um tocador de música
+embarcado que respeite os requisitos temporais e funcionais de um sistema de
+tempo real. Os objetivos específicos são:
+
+\begin{itemize}
+    \item Definir e especificar o modelo de tarefas do sistema, incluindo
+    períodos e deadlines;
+    \item Implementar tarefas periódicas e aperiódicas/esporádicas com
+    tratamento de interrupções de software e hardware;
+    \item Validar o sistema por meio de simulação no ambiente Wokwi, como posterior implementação física;
+    \item Demonstrar que a aplicação satisfaz os deadlines estabelecidos sem
+    violações perceptíveis.
+\end{itemize}
+
+% ============================================================
+\section{Fundamentação Teórica}
+
+\subsection{Sistemas de Tempo Real}
+
+Um sistema de tempo real é aquele cujo comportamento correto depende tanto
+da lógica das operações quanto dos instantes em que seus resultados são
+produzidos. As tarefas em um STR são classificadas segundo
+seus deadlines em: (i) \textit{hard real-time}, em que a perda de um deadline
+representa falha catastrófica; (ii) \textit{firm real-time}, em que resultados
+tardios são descartados sem valor; e (iii) \textit{soft real-time}, em que
+atrasos degradam a qualidade mas não comprometem a operação.
+
+No tocador de música, a tarefa de envio de amostras ao DAC é classificada como
+\textit{firm real-time}: uma amostra entregue fora do instante correto é
+simplesmente descartada, gerando artefato sonoro. As demais tarefas (leitura SD,
+atualização de display, tratamento de botões...) são \textit{soft real-time}.
+
+\subsection{Modelo de Tarefas}
+
+Cada tarefa $\tau_i$ é definida por
+$C_i, T_i, D_i, J_i$, onde $C_i$ é o tempo de computação no pior caso
+(WCET), $T_i$ é o período, $D_i$ é o deadline relativo e $J_i$ é o jitter máximo tolerado.
+
+\subsection{FreeRTOS e ESP-ADF}
+
+O FreeRTOS é um microkernel de tempo real, amplamente
+utilizado em sistemas embarcados. Sobre o ESP32, ele é
+integrado ao ESP-IDF (Espressif IoT Development Framework) e oferece:
+escalonador preemptivo por prioridades, semáforos binários e de contagem,
+mutexes, filas (queues) e notificações de tarefas. O ESP32 possui dois núcleos
+de 240 MHz, o que permite fixar a tarefa crítica de áudio em um núcleo
+dedicado (Core 1) e as demais tarefas no Core 0, eliminando interferências. Ainda, a Espressif dispõe do framework de áudio ESP-ADF, pelo qual é possível a decodificação de arquivos em MP3, bem como o controle de áudio em buffer, para enfim seu \textit{output} via protocolo I2S.
+
+\subsection{Protocolo I2S e DAC Externo}
+
+O I2S (\textit{Inter-IC Sound}) é um barramento serial síncrono desenvolvido
+para interconexão de circuitos de áudio digital. Utiliza três
+sinais: SCK, WS e
+SD (\textit{serial data}). O DAC externo recebe as amostras decodificadas do ESP32 e as converte
+em tensão analógica com maior resolução e melhor resolução do que o DAC interno do ESP32.
+
+\subsection{Buffer Circular}
+
+O buffer circular é a estrutura de dados central que desacopla a tarefa de
+leitura do SD (produtora) da tarefa de reprodução de áudio (consumidora). Seu
+tamanho mínimo é dado por:
+
+\begin{equation}
+    B_{min} = T_{lat} \times F_s \times N_b
+    \label{eq_buffer}
+\end{equation}
+
+onde $T_{lat}$ é a latência máxima esperada na leitura do SD (s), $F_s$ é a
+frequência de amostragem (Hz) e $N_b$ é o número de bytes por amostra. Para
+$T_{lat} = 10\,\text{ms}$, $F_s = 44100\,\text{Hz}$ e $N_b = 4$
+(estéreo, 16 bits), obtém-se $B_{min} \approx 1764\,\text{bytes}$. Na
+implementação, adota-se $B = 4096\,\text{bytes}$ para margem de segurança.
+
+% ============================================================
+\section{Materiais e Métodos}
+
+\subsection{Plataforma de Hardware}
+
+\subsubsection{ESP32}
+O ESP32 (Espressif Systems) é um SoC de duplo núcleo Xtensa LX6 com clock de 240 MHz, 520 KB de SRAM, suporte nativo a SPI, I2C e I2S,
+e integração com o FreeRTOS via ESP-IDF.
+
+\subsubsection{Display LCD 16x2 com I2C}
+O display LCD HD44780 permite comunicação via 8 bits em paralelo (mais eficiente que I2C nesse caso), exibindo nome da faixa, estado
+do player e nível de volume.
+
+\subsubsection{Módulo Leitor de Cartão SD (SPI)}
+O módulo cartão SD comunica-se via SPI (MOSI, MISO, SCK, CS). O
+sistema de arquivos utilizado é FAT32, acessado pela biblioteca
+\texttt{esp\_vfs\_fat} do ESP-IDF. Os arquivos de áudio são armazenados no
+formato MP3, 44100 Hz, estéreo, 256kbps.
+
+\subsubsection{Botões de Controle}
+Três botões físicos são conectados a pinos GPIO com resistores de 1k$\omega$
+externos: LEFT (diminuir volume), MID (play/pause, anterior, próxima, stop) e RIGHT
+(aumentar volume). Cada botão é configurado para gerar interrupção na borda
+de descida (\texttt{GPIO\_INTR\_NEGEDGE}).
+
+\subsubsection{Codificador Rotativo}
+O codificador rotativo fornece dois sinais em quadratura (CLK e DT)
+e um sinal de botão (SW). Os pinos CLK e DT são configurados com interrupção
+em ambas as bordas para detecção de direção de giro. O encoder é utilizado
+para navegação (giro) e confirmação de seleção (botão).
+
+\subsubsection{DAC Externo via I2S}
+Um DAC externo compatível com I2S (ex.: PCM5102A) é conectado ao ESP32 pelos
+pinos I2S\_BCK, I2S\_WS e I2S\_DATA. O driver I2S do ESP-IDF é configurado
+no modo mestre com taxa de amostragem de 44.100 Hz, formato 16 bits estéreo.
