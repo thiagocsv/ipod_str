@@ -1,10 +1,23 @@
 idf_component_register(
-    SRCS "ipod.c" 
-         "i2cTools.c" 
-         "spiTools.c" 
-         "lcdTools.c" 
-         "sdTools.c" 
-         "audioTools.c"
+    SRCS
+        "ipod.c"
+        "tasks.c"
+        "btnTools.c"
+        "encoderTools.c"
+        "lcdTools.c"
+        "sdTools.c"
+        "audioTools.c"
+        "libManager.c"
     INCLUDE_DIRS "."
-    REQUIRES fatfs vfs sdmmc esp_driver_spi esp_driver_i2c
+    REQUIRES
+        esp_vfs_fat
+        freertos
+        driver
+        sdmmc
+    PRIV_REQUIRES
+        audio_pipeline
+        fatfs_stream
+        i2s_stream
+        mp3_decoder
+        audio_sal
 )

@@ -2,12 +2,17 @@
 
 void taskInitInterfaces(void *params)
 {
+    lcdInit();
+
     spiInit(SPI_HOST, 23, 19, 18);
+
     sd_create(&sdcard, SPI_HOST, 5, "/sdcard");
     sd_mount(&sdcard);
 
     buildPlayer(&player);
+
     btn_manager(NULL);
+    encoder_init();
 
     xSemaphoreGive(sdsemphr);
 
