@@ -1,17 +1,15 @@
 #include "btnTools.h"
 
-static btn_t buttons[3];
+static btn_t buttons[4];
 
 static void IRAM_ATTR btn_isr(void *params)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-
     btn_t *btn = (btn_t *)params;
 
     xTimerResetFromISR(btn->debounce_timer, &xHigherPriorityTaskWoken);
 
     portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
-
 }
 
 static void hold_btn (TimerHandle_t xTimer)
@@ -112,9 +110,20 @@ void btn_manager(void *params)
         .hold = PREV
     };
 
-    gpio_install_isr_service(0);
+    buttons[3] = (btn_t)
+    {
+        .pin = ENC_SW,
+        .state = IDLE,
+        .tap_count = 0,
+        .cmd_single = ENTER,
+        .cmd_double = RETURN,
+        .cmd_triple = RETURN,
+        .cmd_hold = RETURN
+    }
 
-    for(int i=0;i<3;i++)
+    gpio_install_isr_service(ESP_INTR_FLAG_IRAM);
+
+    for(int i=0;i<4;i++)
     {
         gpio_set_direction(buttons[i].pin, GPIO_MODE_INPUT);
 

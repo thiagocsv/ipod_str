@@ -1,34 +1,33 @@
-#include "spiTools.h"
-#include "audioTools.h"
-#include "lcdTools.h"
+#include "tasks.h"
 
-#define SDA
-#define SCL
+QueuHandle_t cmdQueue;
+SemaphoreHandle_t sdsemphr;
+EventGroupHandle_t audioEvents;
+EventGroupHandle_t uiEvents;
 
-#define MOSI
-#define MISO
-#define CLK
-#define CS
-
-EventGroupHandle_t show;
 lcdDevice display;
 sdDevice sdcard;
 audioClass player;
 
+
 void app_main(void)
 {
-    sendByte(&lcd, 0x0C, 0);
+    cmdQueue = xQueueCreate(10, sizeof(ui_commands_t));
+    sdsemphr = xSemaphoreCreateMutex();
+    audioEvents = xEventGroupCreate();
+    uiEvents = xEventGroupCreate();
+
+    if(cmdQueue == NULL || sdsemphr == NULL || audioEvents == NULL || uiEvents == NULL)
+        return;
 
     xTaskCreatePinnedToCore
     (
-        initInterfaces,
-        "interfaces_initializer",
-        1024,
+        taskInitInterfaces,
+        "General_Setup",
+        4096,
         NULL,
-        1,
+        5,
         NULL,
-        0
+        1
     );
-
-
 }

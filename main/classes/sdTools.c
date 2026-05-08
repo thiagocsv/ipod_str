@@ -6,6 +6,7 @@ void sd_create(sdDevice *self, spi_host_device_t host_id, int cs_pin, const char
     self->host_id = host_id;
     self->cs_pin = cs_pin;
     self->mount_point = mount_point;
+    self->card = NULL;
 }
 
 esp_err_t sd_mount(sdDevice *self) {
@@ -21,5 +22,5 @@ esp_err_t sd_mount(sdDevice *self) {
     slot_config.host_id = self->host_id;
     
     sdmmc_card_t *card;
-    return esp_vfs_fat_sdspi_mount(self->mount_point, &host, &slot_config, &mount_config, &card);
+    return esp_vfs_fat_sdspi_mount(self->mount_point, &host, &slot_config, &mount_config, &self->card);
 }

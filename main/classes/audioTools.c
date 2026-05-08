@@ -72,6 +72,8 @@ void stopSound(audioClass *self)
 
     audio_pipeline_wait_for_stop(self->pipeline);
 
+    audio_pipeline_terminate(self->pipeline);
+
     self->isPlaying = false;
     self->isPaused = false;
 }
@@ -99,18 +101,19 @@ void getMetadata(audioClass *self, char *title, char *artist)
     if(id3_info != NULL)
     {
         if(id3_info->title != NULL)
-            strcpy(title, id3_info->title);
+            strcpy(title, id3_info->title, 63);
+            title[63] = '\0';
         else
             strcpy(title, "Unknown");
 
         if(id3_info->artist != NULL)
-            strcpy(artist, id3_info->artist);
+            strcpy(artist, id3_info->artist, 31);
         else
             strcpy(artist, "Unknown");
     }
     else
     {
-        strcpy(title, "Sem Tag ID3");
+        strcpy(title, "Without ID3");
         strcpy(artist, "");
     }
 }

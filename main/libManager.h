@@ -5,6 +5,7 @@
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 #include <taglib/tag_c.h>
+#include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
 #include <dirent.h>
@@ -26,7 +27,7 @@ typedef struct
 
 int totalSongs(void);
 
-void getSongs(char *param);
+bool getSong(int index, song_t target);
 
 void buildLib(void *params);
 

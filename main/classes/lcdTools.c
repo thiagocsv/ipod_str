@@ -1,7 +1,4 @@
-#include "driver/gpio.h"
-#include "esp_rom_sys.h"
-#include <stdbool.h>
-#include <string.h>
+#include "sdTools.h"
 
 static void sendByte(lcdDevice *self, uint8_t value, bool rs)
 {
@@ -48,6 +45,26 @@ void setCursor(lcdDevice *self, uint8_t col, uint8_t line)
     sendByte(self, address, 0);
 }
 
+void lcdInit(lcdDevice *self, int rs, int en, int d0, int d1, int d2, int d3, int d4, int d5, int d6, int d7)
+{
+    self->rs = rs;
+    self->en = en;
+    self->data_pins[0] = d0;
+    self->data_pins[1] = d1;
+    self->data_pins[2] = d2;
+    self->data_pins[3] = d3;
+    self->data_pins[4] = d4;
+    self->data_pins[5] = d5;
+    self->data_pins[6] = d6;
+    self->data_pins[7] = d7;
+
+    gpio_set_direction(self->rs, GPIO_MODE_OUTPUT);
+    gpio_set_direction(self->en, GPIO_MODE_OUTPUT);
+    for(int i=0; i<8; i++) {
+        gpio_set_direction(self->data_pins[i], GPIO_MODE_OUTPUT);
+    }
+}
+
 void lcdWrite(lcdDevice *self, const char *txt, uint8_t col, uint8_t line, uint8_t offset, uint8_t until)
 {
     setCursor(self, col, line);
@@ -55,12 +72,25 @@ void lcdWrite(lcdDevice *self, const char *txt, uint8_t col, uint8_t line, uint8
     int size = strlen(txt);
 
     if(size <= until)
+    {
         for(int i=0; i<size; i++)
             sendByte(self, txt[i], 1);
 
+        for(int i=size; i<until; i++)
+            sendByte(self, ' ', 1);
+
+        return;
+    }
+
+    int total_txt = size + 3;
+
     for(int i=0; i<until; i++)
     {
-        int index = (offset + i) % size;
-        sendByte(self, txt[index], 1);
+        int index = (offset + i) % total_txt;
+
+        if(index < size)
+            sendByte(self, txt[index], 1);
+        else
+            sendByte(self, ' ', 1);
     }
 }

@@ -8,9 +8,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define BTN_PLAY
-#define BTN_UP
-#define BTN_DOWN
+#define BTN_PLAY 32
+#define BTN_UP 33
+#define BTN_DOWN 25
+#define ENC_SW 34
 
 #define DEB 50
 #define DB_TAP 300
@@ -23,7 +24,11 @@ typedef enum
     PREV,
     STOP,
     VOL_UP,
-    VOL_DOWN
+    VOL_DOWN,
+    ENTER,
+    RETURN,
+    NAV_UP,
+    NAV_DOWN
 } ui_commands_t;
 
 typedef enum
@@ -47,8 +52,7 @@ typedef struct
 } btn_t;
 
 extern QueueHandle_t cmdQueue;
-extern SemaphoreHandle_t sdSem;
 
-void btn_manager(void);
+void btn_manager(void *params);
 
 #endif
