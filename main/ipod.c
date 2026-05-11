@@ -1,6 +1,6 @@
 #include "tasks.h"
 
-QueuHandle_t cmdQueue;
+QueueHandle_t cmdQueue;
 SemaphoreHandle_t sdsemphr;
 EventGroupHandle_t audioEvents;
 EventGroupHandle_t uiEvents;

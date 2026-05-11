@@ -10,6 +10,7 @@
 #include "sdTools.h"
 #include "audioTools.h"
 #include "btnTools.h"
+#include "libManager.h"
 
 #define EVT_PLAY_PAUSE (1 << 0)
 #define EVT_NEXT (1 << 1)

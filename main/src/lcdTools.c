@@ -65,32 +65,43 @@ void lcdInit(lcdDevice *self, int rs, int en, int d0, int d1, int d2, int d3, in
     }
 }
 
-void lcdWrite(lcdDevice *self, const char *txt, uint8_t col, uint8_t line, uint8_t offset, uint8_t until)
+void lcdWrite(lcdDevice *self, const char *txt, uint8_t x, uint8_t y, uint8_t offset, uint8_t until)
 {
-    setCursor(self, col, line);
+    setCursor(self, x, y);
 
-    int size = strlen(txt);
+    int char_count = 0;
+    int len = strlen(txt);
 
-    if(size <= until)
+    if(len > 0)
     {
-        for(int i=0; i<size; i++)
-            sendByte(self, txt[i], 1);
+        int start_pos = offset % (len + 3);
 
-        for(int i=size; i<until; i++)
-            sendByte(self, ' ', 1);
+        for(int i=0;i<until;i++)
+        {
+            int current = start_pos + i;
 
-        return;
+            if(current < len)
+            {
+                sendByte(self, txt[current], 1);
+                char_count++;
+            }
+
+            else
+                break;
+        }
     }
 
-    int total_txt = size + 3;
-
-    for(int i=0; i<until; i++)
+    while(char_count < until)
     {
-        int index = (offset + i) % total_txt;
-
-        if(index < size)
-            sendByte(self, txt[index], 1);
-        else
-            sendByte(self, ' ', 1);
+        sendByte(self, ' ', 1);
+        char_count++;
     }
+}
+
+void writeList(uint32_t *w0, uint32_t *w1, bool line)
+{
+    lcdWrite(&display, w0, 1, 0, 0, 15);
+    lcdWrite(&display, w0, 1, 0, 0, 15);
+
+    lcdWrite(&display, ">", 0, line, 0, 1);
 }

@@ -11,9 +11,9 @@
 #include <dirent.h>
 
 #define CSV_PATH "/sdcard/data/tags_library.csv"
-#define ARTIST_PATH "/sdcard/data/index/artists.txt"
-#define ALBUM_PATH "/sdcard/data/index/album.txt"
-#define GENRE_PATH "/sdcard/data/index/genre.txt"
+#define ARTIST_PATH "/sdcard/data/index/artists.idx"
+#define ALBUM_PATH "/sdcard/data/index/album.idx"
+#define GENRE_PATH "/sdcard/data/index/genre.idx"
 #define MUSIC_DIR "/sdcard/music/"
 
 typedef struct
