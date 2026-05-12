@@ -101,7 +101,7 @@ void lcdWrite(lcdDevice *self, const char *txt, uint8_t x, uint8_t y, uint8_t of
 void writeList(uint32_t *w0, uint32_t *w1, bool line)
 {
     lcdWrite(&display, w0, 1, 0, 0, 15);
-    lcdWrite(&display, w0, 1, 0, 0, 15);
+    lcdWrite(&display, w1, 1, 1, 0, 15);
 
     lcdWrite(&display, ">", 0, line, 0, 1);
 }

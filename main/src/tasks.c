@@ -157,7 +157,7 @@ void taskUI(void *params)
                 break;
 
             case UI_LIST:
-                const char *files[4] = {CSV_PATH, ARTIST_PATH, ALBUM_PATH, GENRE_PATH};
+
                 static unsigned short int w0 = 0, w1 = 1;
                 uint32_t filtr[10];
 

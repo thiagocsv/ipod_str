@@ -1,34 +1,29 @@
 #ifndef LIBMANAGER_H
 #define LIBMANAGER_H
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/semphr.h"
-#include <taglib/tag_c.h>
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
-#include <dirent.h>
 
-#define CSV_PATH "/sdcard/data/tags_library.csv"
-#define ARTIST_PATH "/sdcard/data/index/artists.idx"
-#define ALBUM_PATH "/sdcard/data/index/album.idx"
-#define GENRE_PATH "/sdcard/data/index/genre.idx"
-#define MUSIC_DIR "/sdcard/music/"
+#define MUSIC_PATH "/sdcard/music/"
+#define INDEX_PATH "/sdcard/music/index.bin"
+#define PATH_SIZE 26
 
+#pragma pack(push, 1)
 typedef struct
 {
-    char artist[32];
-    char album[32];
-    char title[64];
-    char genre[32];
-    char path[128];
+    char title[46];
+    char artist[40];
+    char album[36];
+    uint8_t track_num;
+    uint8_t genre_id;
+    uint8_t folder_id;
+    char filename[3];
 } song_t;
+#pragma (pop)
 
-int totalSongs(void);
+bool loadSong(uint32_t index, song_t song, char *out_path);
 
-bool getSong(int index, song_t target);
-
-void buildLib(void *params);
+uint32_t totalSongs();
 
 #endif
